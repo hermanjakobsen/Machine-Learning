@@ -1,4 +1,5 @@
 from math import exp
+from math import pow
 from numpy import array_split
 from pandas import read_csv
 from random import seed
@@ -32,6 +33,8 @@ def normalize_dataset(dataset):
 def cross_validation_split(dataset, nFolds):
     datasetSplit = []
     datasetCopy = dataset.values.tolist()
+    for i in range(len(datasetCopy)):
+        datasetCopy[i][-1] = int(datasetCopy[i][-1])
     foldSize = int(len(datasetCopy) / nFolds)
     for _ in range(nFolds):
         fold = []
@@ -155,9 +158,9 @@ def train_network(network, train, lRate, nEpoch, nOutputs):
         for row in train:
             outputs = forward_propagate(network, row)
             expected = [0 for i in range(nOutputs)]
-            expected[int(row[-1])-1] = 1
-            sumError += sum([(expected[i]-outputs[i]) **
-                             2 for i in range(len(expected))])
+            expected[row[-1]-1] = 1
+            sumError += sum([pow((expected[i]-outputs[i]), 2)
+                            for i in range(len(expected))])
             backward_propagate_error(network, expected)
             update_weights(network, row, lRate)
         print('>epoch=%d, lrate=%.3f, error=%.3f' % (epoch, lRate, sumError))
@@ -166,14 +169,11 @@ def train_network(network, train, lRate, nEpoch, nOutputs):
 # Make a prediction with a network
 def predict(network, row):
     outputs = forward_propagate(network, row)
-    return outputs.index(max(outputs))  # arg max function
+    return outputs.index(max(outputs)) + 1  # arg max function
 
 
 # Backpropagation Algorithm With Stochastic Gradient Descent
 def back_propagation(train, test, lRate, nEpoch, nHidden):
-    print(train)
-    print('\n\n\n\n\n\n')
-    print(test)
     nInputs = len(train[0]) - 1
     nOutputs = len(set([row[-1] for row in train]))
     network = initialize_network(nInputs, nHidden, nOutputs)
@@ -184,7 +184,7 @@ def back_propagation(train, test, lRate, nEpoch, nHidden):
         predictions.append(prediction)
     return(predictions)
 
-seed(1)
+
 # Load and prepare dataset
 url = "https://raw.githubusercontent.com/jbrownlee/Datasets/master/wheat-seeds.csv"
 names = ['area', 'perimeter', 'compactness', 'lenght_of_kernel',
@@ -193,7 +193,7 @@ dataset = normalize_dataset(read_csv(url, names=names))
 
 # Evaluate algorithm
 nFolds = 5
-lRate = 0.9
+lRate = 0.3
 nEpoch = 500
 nHidden = 5
 
